@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Countdown Timer</title>
+</head>
+<body>
+    <div id="countdown"></div>
+    <script>
+        function updateCountdown() {
+            fetch('/get_countdown')
+                .then(response => response.json())
+                .then(data => {
+                    const remainingTime = data.remaining_time;
+                    const totalSeconds = 86400; // 24 hours in seconds
+                    const percentage = (remainingTime / totalSeconds) * 100;
+                    const days = Math.floor(remainingTime / 86400);
+                    const hours = Math.floor((remainingTime % 86400) / 3600);
+                    const minutes = Math.floor((remainingTime % 3600) / 60);
+                    const seconds = Math.floor(remainingTime % 60);
+
+                    document.getElementById('countdown').innerHTML = `
+                        <div>Days: ${days}</div>
+                        <div>Hours: ${hours}</div>
+                        <div>Minutes: ${minutes}</div>
+                        <div>Seconds: ${seconds}</div>
+                        <div>Percentage: ${percentage.toFixed(2)}%</div>
+                    `;
+                });
+        }
+
+        setInterval(updateCountdown, 1000);
+    </script>
+</body>
+</html>
