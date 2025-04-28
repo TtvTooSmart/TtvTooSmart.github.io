@@ -80,7 +80,7 @@
 
       countdownEl.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s left`;
 
-      const percentagePassed = Math.min((timePassed / totalDuration) * 100, 100).toFixed(2);
+      const percentagePassed = Math.min((timePassed / totalDuration) * 100, 100).toFixed(4);
       progressBar.style.width = `${percentagePassed}%`;
       progressBar.textContent = `${percentagePassed}%`;
     }
