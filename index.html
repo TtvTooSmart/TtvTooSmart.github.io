@@ -1,34 +1,92 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Countdown Timer</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Countdown Timer with Percentage</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .countdown {
+      font-size: 2em;
+      margin: 10px 0;
+    }
+
+    .progress-container {
+      width: 80%;
+      background: #ddd;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+
+    .progress-bar {
+      height: 25px;
+      background: #4caf50;
+      width: 0%;
+      color: white;
+      text-align: center;
+      line-height: 25px;
+      transition: width 0.5s ease;
+    }
+  </style>
 </head>
 <body>
-    <div id="countdown"></div>
-    <script>
-        function updateCountdown() {
-            fetch('/get_countdown')
-                .then(response => response.json())
-                .then(data => {
-                    const remainingTime = data.remaining_time;
-                    const totalSeconds = 86400; // 24 hours in seconds
-                    const percentage = (remainingTime / totalSeconds) * 100;
-                    const days = Math.floor(remainingTime / 86400);
-                    const hours = Math.floor((remainingTime % 86400) / 3600);
-                    const minutes = Math.floor((remainingTime % 3600) / 60);
-                    const seconds = Math.floor(remainingTime % 60);
 
-                    document.getElementById('countdown').innerHTML = `
-                        <div>Days: ${days}</div>
-                        <div>Hours: ${hours}</div>
-                        <div>Minutes: ${minutes}</div>
-                        <div>Seconds: ${seconds}</div>
-                        <div>Percentage: ${percentage.toFixed(2)}%</div>
-                    `;
-                });
-        }
+  <h1>Countdown Timer</h1>
+  <div class="countdown" id="countdown">Loading...</div>
+  <div class="progress-container">
+    <div class="progress-bar" id="progressBar">0%</div>
+  </div>
 
-        setInterval(updateCountdown, 1000);
-    </script>
+  <script>
+    // Set your start and end date here
+    const startDate = new Date("2025-04-21T00:00:00");
+    const endDate = new Date("2025-05-26T17:59:59");
+
+    const countdownEl = document.getElementById("countdown");
+    const progressBar = document.getElementById("progressBar");
+
+    function updateCountdown() {
+      const now = new Date();
+      const totalDuration = endDate - startDate;
+      const timePassed = now - startDate;
+      const timeLeft = endDate - now;
+
+      if (timeLeft <= 0) {
+        countdownEl.textContent = "Time's up!";
+        progressBar.style.width = "100%";
+        progressBar.textContent = "100%";
+        return;
+      }
+
+      const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((timeLeft / (1000 * 60)) % 60);
+      const seconds = Math.floor((timeLeft / 1000) % 60);
+
+      countdownEl.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s left`;
+
+      const percentagePassed = Math.min((timePassed / totalDuration) * 100, 100).toFixed(2);
+      progressBar.style.width = `${percentagePassed}%`;
+      progressBar.textContent = `${percentagePassed}%`;
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+  </script>
 </body>
 </html>
