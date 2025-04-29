@@ -177,7 +177,7 @@
       const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
       const minutes = Math.floor((timeLeft / (1000 * 60)) % 60);
       const seconds = Math.floor((timeLeft / 1000) % 60);
-      const percent = ((elapsed / totalDuration) * 100).toFixed(2);
+      const percent = ((elapsed / totalDuration) * 100).toFixed(4);
 
       countdownEl.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s left`;
       countdownProgress.style.width = `${percent}%`;
@@ -227,7 +227,7 @@
 
       const passed = now - startTime;
       const duration = endTime - startTime;
-      const percent = ((passed / duration) * 100).toFixed(2);
+      const percent = ((passed / duration) * 100).toFixed(4);
 
       textEl.textContent = `Time passed since start: ${percent}%`;
       bar.style.width = `${percent}%`;
