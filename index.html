@@ -3,34 +3,37 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Countdown Timer with Percentage</title>
+  <title>Smart Countdown & Task Manager</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f5f5f5;
+      padding: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
     }
 
     h1 {
-      margin-bottom: 20px;
+      margin-bottom: 10px;
     }
 
-    .countdown {
-      font-size: 2em;
-      margin: 10px 0;
+    .section {
+      width: 80%;
+      max-width: 700px;
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin: 15px 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
     .progress-container {
-      width: 80%;
+      width: 100%;
       background: #ddd;
       border-radius: 10px;
       overflow: hidden;
-      margin-top: 20px;
+      margin: 10px 0;
     }
 
     .progress-bar {
@@ -42,51 +45,251 @@
       line-height: 25px;
       transition: width 0.5s ease;
     }
+
+    .task-list {
+      list-style: none;
+      padding: 0;
+    }
+
+    .task-list li {
+      display: flex;
+      justify-content: space-between;
+      margin: 5px 0;
+      padding: 5px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .calendar-settings, .weekdays {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .weekdays label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    input[type="date"],
+    input[type="time"],
+    input[type="text"] {
+      padding: 5px;
+      font-size: 1em;
+    }
+
+    button {
+      padding: 6px 12px;
+      margin-top: 5px;
+    }
   </style>
 </head>
 <body>
 
-  <h1>Countdown Timer</h1>
-  <div class="countdown" id="countdown">Loading...</div>
-  <div class="progress-container">
-    <div class="progress-bar" id="progressBar">0%</div>
+  <h1>Smart Countdown & Task Manager</h1>
+
+  <!-- Calendar Display & Picker -->
+  <div class="section">
+    <h2>📅 Date</h2>
+    <div id="calendar">Loading date...</div>
+    <div class="calendar-settings">
+      <label>Select Date: <input type="date" id="datePicker"></label>
+    </div>
+  </div>
+
+  <!-- Working Days Selector -->
+  <div class="section">
+    <h2>⚙️ Working Days</h2>
+    <div class="weekdays" id="workingDays">
+      <label><input type="checkbox" value="1" checked> Mon</label>
+      <label><input type="checkbox" value="2" checked> Tue</label>
+      <label><input type="checkbox" value="3" checked> Wed</label>
+      <label><input type="checkbox" value="4" checked> Thu</label>
+      <label><input type="checkbox" value="5" checked> Fri</label>
+      <label><input type="checkbox" value="6" checked> Sat</label>
+    </div>
+  </div>
+
+  <!-- Countdown Timer -->
+  <div class="section">
+    <h2>⏳ Countdown</h2>
+    <div id="countdown">Loading...</div>
+    <div class="progress-container">
+      <div class="progress-bar" id="countdownProgress">0%</div>
+    </div>
+  </div>
+
+  <!-- Daily Work Timer -->
+  <div class="section">
+    <h2>📈 Daily Work Progress</h2>
+    <label>Start Time: <input type="time" id="startTime" value="09:00"></label>
+    <label>End Time: <input type="time" id="endTime" value="17:30"></label>
+    <div id="timePassed">Loading...</div>
+    <div class="progress-container">
+      <div class="progress-bar" id="timeProgressBar">0%</div>
+    </div>
+  </div>
+
+  <!-- Task Tracker -->
+  <div class="section">
+    <h2>📝 Task Tracker</h2>
+    <input type="text" id="taskInput" placeholder="New task..." />
+    <button onclick="addTask()">Add Task</button>
+    <ul class="task-list" id="taskList"></ul>
+    <div id="taskProgress">0/0 tasks completed</div>
+    <div class="progress-container">
+      <div class="progress-bar" id="taskProgressBar">0%</div>
+    </div>
   </div>
 
   <script>
-    // Set your start and end date here
     const startDate = new Date("2025-04-21T00:00:00");
     const endDate = new Date("2025-05-26T17:59:59");
 
     const countdownEl = document.getElementById("countdown");
-    const progressBar = document.getElementById("progressBar");
+    const countdownProgress = document.getElementById("countdownProgress");
+    const calendarEl = document.getElementById("calendar");
+    const datePicker = document.getElementById("datePicker");
+
+    function updateCalendar() {
+      const now = new Date();
+      calendarEl.textContent = now.toLocaleDateString('en-IN', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+      });
+      datePicker.valueAsDate = now;
+    }
 
     function updateCountdown() {
       const now = new Date();
       const totalDuration = endDate - startDate;
-      const timePassed = now - startDate;
-      const timeLeft = endDate - now;
+      const elapsed = now - startDate;
 
-      if (timeLeft <= 0) {
+      if (elapsed >= totalDuration) {
         countdownEl.textContent = "Time's up!";
-        progressBar.style.width = "100%";
-        progressBar.textContent = "100%";
+        countdownProgress.style.width = "100%";
+        countdownProgress.textContent = "100%";
         return;
       }
 
+      const timeLeft = endDate - now;
       const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
       const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
       const minutes = Math.floor((timeLeft / (1000 * 60)) % 60);
       const seconds = Math.floor((timeLeft / 1000) % 60);
+      const percent = ((elapsed / totalDuration) * 100).toFixed(2);
 
       countdownEl.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s left`;
-
-      const percentagePassed = Math.min((timePassed / totalDuration) * 100, 100).toFixed(4);
-      progressBar.style.width = `${percentagePassed}%`;
-      progressBar.textContent = `${percentagePassed}%`;
+      countdownProgress.style.width = `${percent}%`;
+      countdownProgress.textContent = `${percent}%`;
     }
 
+    function getSelectedWorkingDays() {
+      return Array.from(document.querySelectorAll('#workingDays input:checked'))
+                  .map(cb => parseInt(cb.value)); // 1–6 (Mon–Sat)
+    }
+
+    function updateTimePassed() {
+      const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+      const day = now.getDay(); // 0=Sun ... 6=Sat
+      const workingDays = getSelectedWorkingDays();
+
+      const start = document.getElementById("startTime").value.split(":");
+      const end = document.getElementById("endTime").value.split(":");
+      const startTime = new Date(now), endTime = new Date(now);
+
+      startTime.setHours(start[0], start[1], 0, 0);
+      endTime.setHours(end[0], end[1], 0, 0);
+
+      const textEl = document.getElementById("timePassed");
+      const bar = document.getElementById("timeProgressBar");
+
+      if (!workingDays.includes(day)) {
+        textEl.textContent = "Timer inactive (not a working day)";
+        bar.style.width = "0%";
+        bar.textContent = "0%";
+        return;
+      }
+
+      if (now < startTime) {
+        textEl.textContent = "Waiting for start time...";
+        bar.style.width = "0%";
+        bar.textContent = "0%";
+        return;
+      }
+
+      if (now > endTime) {
+        textEl.textContent = "Day over!";
+        bar.style.width = "100%";
+        bar.textContent = "100%";
+        return;
+      }
+
+      const passed = now - startTime;
+      const duration = endTime - startTime;
+      const percent = ((passed / duration) * 100).toFixed(2);
+
+      textEl.textContent = `Time passed since start: ${percent}%`;
+      bar.style.width = `${percent}%`;
+      bar.textContent = `${percent}%`;
+    }
+
+    // Task Tracker
+    let tasks = [];
+
+    function addTask() {
+      const taskInput = document.getElementById("taskInput");
+      const text = taskInput.value.trim();
+      if (!text) return;
+      tasks.push({ text, completed: false });
+      taskInput.value = "";
+      updateTasks();
+    }
+
+    function toggleTask(i) {
+      tasks[i].completed = !tasks[i].completed;
+      updateTasks();
+    }
+
+    function updateTasks() {
+      const list = document.getElementById("taskList");
+      const progressText = document.getElementById("taskProgress");
+      const bar = document.getElementById("taskProgressBar");
+
+      list.innerHTML = "";
+      tasks.forEach((task, i) => {
+        const li = document.createElement("li");
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = task.completed;
+        cb.onclick = () => toggleTask(i);
+
+        const span = document.createElement("span");
+        span.textContent = task.text;
+        span.style.textDecoration = task.completed ? "line-through" : "none";
+
+        li.appendChild(cb);
+        li.appendChild(span);
+        list.appendChild(li);
+      });
+
+      const done = tasks.filter(t => t.completed).length;
+      const total = tasks.length;
+      const percent = total ? ((done / total) * 100).toFixed(2) : 0;
+
+      progressText.textContent = `${done}/${total} tasks completed`;
+      bar.style.width = `${percent}%`;
+      bar.textContent = `${percent}%`;
+    }
+
+    updateCalendar();
     updateCountdown();
+    updateTimePassed();
+    updateTasks();
+
     setInterval(updateCountdown, 1000);
+    setInterval(updateTimePassed, 60000);
+    setInterval(updateCalendar, 60000);
   </script>
 </body>
 </html>
