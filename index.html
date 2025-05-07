@@ -7,7 +7,7 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f5f5f5;
+      background: linear-gradient(to bottom right, #fcbbfa, #a83faf);
       padding: 20px;
       display: flex;
       flex-direction: column;
@@ -21,11 +21,11 @@
     .section {
       width: 80%;
       max-width: 700px;
-      background: white;
-      border-radius: 10px;
+      background: #eac4f8;
+      border-radius: 15px;
       padding: 20px;
       margin: 15px 0;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
     .progress-container {
@@ -38,7 +38,7 @@
 
     .progress-bar {
       height: 25px;
-      background: #4caf50;
+      background: #7d4ccc;
       width: 0%;
       color: white;
       text-align: center;
@@ -54,8 +54,8 @@
     .task-list li {
       display: flex;
       justify-content: space-between;
-      margin: 5px 0;
-      padding: 5px;
+      align-items: center;
+      padding: 5px 10px;
       border-bottom: 1px solid #eee;
     }
 
@@ -75,21 +75,26 @@
     input[type="date"],
     input[type="time"],
     input[type="text"] {
-      padding: 5px;
+      padding: 6px;
       font-size: 1em;
+      border-radius: 5px;
+      border: 1px solid #ccc;
     }
 
     button {
+      background: #9d71df;
+      border: none;
+      border-radius: 5px;
       padding: 6px 12px;
-      margin-top: 5px;
+      cursor: pointer;
+      color: white;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-
   <h1>Smart Countdown & Task Manager</h1>
 
-  <!-- Calendar Display & Picker -->
   <div class="section">
     <h2>📅 Date</h2>
     <div id="calendar">Loading date...</div>
@@ -98,7 +103,6 @@
     </div>
   </div>
 
-  <!-- Working Days Selector -->
   <div class="section">
     <h2>⚙️ Working Days</h2>
     <div class="weekdays" id="workingDays">
@@ -111,7 +115,6 @@
     </div>
   </div>
 
-  <!-- Countdown Timer -->
   <div class="section">
     <h2>⏳ Countdown</h2>
     <div id="countdown">Loading...</div>
@@ -120,18 +123,16 @@
     </div>
   </div>
 
-  <!-- Daily Work Timer -->
   <div class="section">
     <h2>📈 Daily Work Progress</h2>
-    <label>Start Time: <input type="time" id="startTime" value="09:00"></label>
-    <label>End Time: <input type="time" id="endTime" value="17:30"></label>
+    <label>Start Time: <input type="time" id="startTime"></label>
+    <label>End Time: <input type="time" id="endTime"></label>
     <div id="timePassed">Loading...</div>
     <div class="progress-container">
       <div class="progress-bar" id="timeProgressBar">0%</div>
     </div>
   </div>
 
-  <!-- Task Tracker -->
   <div class="section">
     <h2>📝 Task Tracker</h2>
     <input type="text" id="taskInput" placeholder="New task..." />
@@ -144,31 +145,80 @@
   </div>
 
   <script>
-    const startDate = new Date("2025-04-21T00:00:00");
-    const endDate = new Date("2025-05-26T17:59:59");
+    let tasks = [];
+    let endDate = new Date("2025-05-26T17:59:59");
 
-    const countdownEl = document.getElementById("countdown");
-    const countdownProgress = document.getElementById("countdownProgress");
-    const calendarEl = document.getElementById("calendar");
-    const datePicker = document.getElementById("datePicker");
+    function saveTasks() {
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+    }
+
+    function loadTasks() {
+      const saved = localStorage.getItem("tasks");
+      if (saved) {
+        tasks = JSON.parse(saved);
+      }
+      renderTasks();
+    }
+
+    function addTask() {
+      const taskInput = document.getElementById("taskInput");
+      const text = taskInput.value.trim();
+      if (text) {
+        tasks.push({ text, done: false });
+        taskInput.value = "";
+        saveTasks();
+        renderTasks();
+      }
+    }
+
+    function toggleTask(index) {
+      tasks[index].done = !tasks[index].done;
+      saveTasks();
+      renderTasks();
+    }
+
+    function renderTasks() {
+      const list = document.getElementById("taskList");
+      const progressBar = document.getElementById("taskProgressBar");
+      const progressText = document.getElementById("taskProgress");
+      list.innerHTML = "";
+
+      tasks.forEach((task, i) => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <span style="text-decoration:${task.done ? 'line-through' : 'none'}">${task.text}</span>
+          <button onclick="toggleTask(${i})">${task.done ? "Undo" : "Done"}</button>
+        `;
+        list.appendChild(li);
+      });
+
+      const doneCount = tasks.filter(t => t.done).length;
+      const percent = tasks.length ? (doneCount / tasks.length * 100).toFixed(1) : 0;
+      progressBar.style.width = `${percent}%`;
+      progressBar.textContent = `${percent}%`;
+      progressText.textContent = `${doneCount}/${tasks.length} tasks completed`;
+    }
+
+    function getSelectedWorkingDays() {
+      return Array.from(document.querySelectorAll('#workingDays input:checked')).map(cb => parseInt(cb.value));
+    }
 
     function updateCalendar() {
       const now = new Date();
-      calendarEl.textContent = now.toLocaleDateString('en-IN', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-      });
-      datePicker.valueAsDate = now;
+      document.getElementById("calendar").textContent = now.toLocaleDateString();
+      document.getElementById("datePicker").valueAsDate = now;
     }
 
     function updateCountdown() {
       const now = new Date();
-      const totalDuration = endDate - startDate;
+      const startDate = new Date(document.getElementById("datePicker").value);
+      const total = endDate - startDate;
       const elapsed = now - startDate;
-
-      if (elapsed >= totalDuration) {
-        countdownEl.textContent = "Time's up!";
-        countdownProgress.style.width = "100%";
-        countdownProgress.textContent = "100%";
+      const bar = document.getElementById("countdownProgress");
+      if (elapsed >= total) {
+        document.getElementById("countdown").textContent = "Time's up!";
+        bar.style.width = "100%";
+        bar.textContent = "100%";
         return;
       }
 
@@ -177,29 +227,27 @@
       const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
       const minutes = Math.floor((timeLeft / (1000 * 60)) % 60);
       const seconds = Math.floor((timeLeft / 1000) % 60);
-      const percent = ((elapsed / totalDuration) * 100).toFixed(4);
+      const percent = ((elapsed / total) * 100).toFixed(4);
 
-      countdownEl.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s left`;
-      countdownProgress.style.width = `${percent}%`;
-      countdownProgress.textContent = `${percent}%`;
-    }
-
-    function getSelectedWorkingDays() {
-      return Array.from(document.querySelectorAll('#workingDays input:checked'))
-                  .map(cb => parseInt(cb.value)); // 1–6 (Mon–Sat)
+      document.getElementById("countdown").textContent = `${days}d ${hours}h ${minutes}m ${seconds}s left`;
+      bar.style.width = `${percent}%`;
+      bar.textContent = `${percent}%`;
     }
 
     function updateTimePassed() {
-      const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
-      const day = now.getDay(); // 0=Sun ... 6=Sat
+      const now = new Date();
+      const day = now.getDay();
       const workingDays = getSelectedWorkingDays();
 
-      const start = document.getElementById("startTime").value.split(":");
-      const end = document.getElementById("endTime").value.split(":");
-      const startTime = new Date(now), endTime = new Date(now);
+      const startInput = document.getElementById("startTime").value;
+      const endInput = document.getElementById("endTime").value;
+      const [sh, sm] = startInput.split(":");
+      const [eh, em] = endInput.split(":");
 
-      startTime.setHours(start[0], start[1], 0, 0);
-      endTime.setHours(end[0], end[1], 0, 0);
+      const startTime = new Date(now);
+      const endTime = new Date(now);
+      startTime.setHours(sh, sm, 0);
+      endTime.setHours(eh, em, 0);
 
       const textEl = document.getElementById("timePassed");
       const bar = document.getElementById("timeProgressBar");
@@ -234,62 +282,52 @@
       bar.textContent = `${percent}%`;
     }
 
-    // Task Tracker
-    let tasks = [];
-
-    function addTask() {
-      const taskInput = document.getElementById("taskInput");
-      const text = taskInput.value.trim();
-      if (!text) return;
-      tasks.push({ text, completed: false });
-      taskInput.value = "";
-      updateTasks();
+    function saveWorkingDays() {
+      localStorage.setItem("workingDays", JSON.stringify(getSelectedWorkingDays()));
     }
 
-    function toggleTask(i) {
-      tasks[i].completed = !tasks[i].completed;
-      updateTasks();
-    }
-
-    function updateTasks() {
-      const list = document.getElementById("taskList");
-      const progressText = document.getElementById("taskProgress");
-      const bar = document.getElementById("taskProgressBar");
-
-      list.innerHTML = "";
-      tasks.forEach((task, i) => {
-        const li = document.createElement("li");
-        const cb = document.createElement("input");
-        cb.type = "checkbox";
-        cb.checked = task.completed;
-        cb.onclick = () => toggleTask(i);
-
-        const span = document.createElement("span");
-        span.textContent = task.text;
-        span.style.textDecoration = task.completed ? "line-through" : "none";
-
-        li.appendChild(cb);
-        li.appendChild(span);
-        list.appendChild(li);
+    function loadWorkingDays() {
+      const saved = JSON.parse(localStorage.getItem("workingDays") || "[]");
+      document.querySelectorAll('#workingDays input').forEach(cb => {
+        cb.checked = saved.includes(parseInt(cb.value));
       });
-
-      const done = tasks.filter(t => t.completed).length;
-      const total = tasks.length;
-      const percent = total ? ((done / total) * 100).toFixed(2) : 0;
-
-      progressText.textContent = `${done}/${total} tasks completed`;
-      bar.style.width = `${percent}%`;
-      bar.textContent = `${percent}%`;
     }
 
-    updateCalendar();
-    updateCountdown();
-    updateTimePassed();
-    updateTasks();
+    function saveTimeSettings() {
+      localStorage.setItem("startTime", document.getElementById("startTime").value);
+      localStorage.setItem("endTime", document.getElementById("endTime").value);
+    }
 
-    setInterval(updateCountdown, 1000);
-    setInterval(updateTimePassed, 1000);
-    setInterval(updateCalendar, 60000);
+    function loadTimeSettings() {
+      document.getElementById("startTime").value = localStorage.getItem("startTime") || "09:00";
+      document.getElementById("endTime").value = localStorage.getItem("endTime") || "17:30";
+    }
+
+    function loadDate() {
+      const saved = localStorage.getItem("selectedDate");
+      if (saved) document.getElementById("datePicker").value = saved;
+    }
+
+    document.getElementById("datePicker").addEventListener("change", () => {
+      localStorage.setItem("selectedDate", document.getElementById("datePicker").value);
+      updateCountdown();
+    });
+
+    document.querySelectorAll('#workingDays input').forEach(cb => cb.addEventListener("change", saveWorkingDays));
+    document.getElementById("startTime").addEventListener("change", saveTimeSettings);
+    document.getElementById("endTime").addEventListener("change", saveTimeSettings);
+
+    window.onload = () => {
+      updateCalendar();
+      loadTasks();
+      loadWorkingDays();
+      loadTimeSettings();
+      loadDate();
+      updateCountdown();
+      updateTimePassed();
+      setInterval(updateCountdown, 1000);
+      setInterval(updateTimePassed, 1000);
+    };
   </script>
 </body>
 </html>
